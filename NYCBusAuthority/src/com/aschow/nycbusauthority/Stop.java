@@ -21,7 +21,8 @@ public class Stop
     	routes = new ArrayList<Route>();
     }
     
-    public Stop() {
+    public Stop() 
+    {
 		id = "";
 		lat = 0;
 		longi = 0;

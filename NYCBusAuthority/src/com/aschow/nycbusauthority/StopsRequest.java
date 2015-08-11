@@ -92,6 +92,7 @@ public interface StopsRequest {
 		        			}
 		        			
 		        			//TODO add routes to stop object
+		        			processRoutes(parser,tempStop,count);
 		        			
 		        			stops.add(tempStop);
 		        			Log.i("stopArraylistTest","size of stop array inside getStops "+ stops.size());
@@ -118,6 +119,35 @@ public interface StopsRequest {
 			}
 				
 		}
+		
+		private static void processRoutes(XmlPullParser parser, Stop stop, int stopCount) throws XmlPullParserException, IOException
+		{
+			String tag = "";
+			int routeCount = 0;
+			while(!tag.equals("routes"))
+			{
+				
+				if(parser.getEventType()==XmlPullParser.END_TAG)
+				{
+					tag = parser.getText();
+					parser.next();
+				}
+				else if(parser.getEventType()==XmlPullParser.START_TAG)
+				{
+					if(parser.getText().equals("route"))
+					{
+						Log.i("stopArraylistTest","route #" + routeCount++ + " found for stop #" + stopCount);
+						parser.next();
+					}
+					else
+					{
+						parser.next();
+					}
+				}
+			}
+		}
+		
+		
 
 	}
 	

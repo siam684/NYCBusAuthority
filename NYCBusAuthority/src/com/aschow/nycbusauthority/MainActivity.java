@@ -27,9 +27,20 @@ public class MainActivity extends ActionBarActivity implements InternetTaskFragm
 
         // If the Fragment is non-null, then it is currently being
         // retained across a configuration change.
-        if (mTaskFragment == null) {
+        if (mTaskFragment == null) 
+        {
+        	
           mTaskFragment = new InternetTaskFragment();
           fm.beginTransaction().add(mTaskFragment, TAG_TASK_FRAGMENT).commit();
+          if (mTaskFragment != null)
+          {
+        	  Log.i("FragmentMessage","Fragment created");
+          }
+          
+        }
+        else
+        {
+        	Log.i("FragmentMessage","mTaskFragment not null");
         }
 
         
