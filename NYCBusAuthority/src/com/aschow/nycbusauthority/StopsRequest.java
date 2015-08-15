@@ -120,14 +120,90 @@ public interface StopsRequest {
 				
 		}
 		
+		private static void skipToNextDefinedStartTag(XmlPullParser parser, String tag) throws XmlPullParserException, IOException
+		{
+			skipToNextStartTag(parser);
+			Log.i("stopArraylistTest",parser.getPositionDescription());
+			while(!parser.getName().equalsIgnoreCase(tag))
+			{
+				skipToNextStartTag(parser);
+			}
+		}
+		
 		private static void processRoutes(XmlPullParser parser, Stop stop, int stopCount) throws XmlPullParserException, IOException
 		{
-			String tag = "";
+			
+			skipToNextDefinedStartTag(parser, "routes");
+			Log.i("stopArraylistTest",parser.getPositionDescription());
+			String tagName = " ";
+			parser.next();
+			Route tempRoute = null;
 			int routeCount = 0;
-			while(!tag.equals("routes"))
+			boolean idNotSet = true;
+			while(!tagName.equals("routes"))
 			{
+				parser.next();
+				if(parser.getEventType()==XmlPullParser.START_TAG)
+				{
+					if(parser.getName().equalsIgnoreCase("route"))
+					{
+						Log.i("stopArraylistTest","route number " + ++routeCount + "for stop number " + stopCount);
+						tempRoute = new Route();
+						idNotSet = true;
+					}
+					else if(parser.getName().equalsIgnoreCase("id")&&idNotSet)
+					{
+						parser.next();
+						tempRoute.setId(parser.getText());
+						idNotSet = false;
+					}
+					else if(parser.getName().equalsIgnoreCase("shortName"))
+					{
+						parser.next();
+						tempRoute.setShortName(parser.getText());
+					}
+					else if(parser.getName().equalsIgnoreCase("longName"))
+					{
+						parser.next();
+						tempRoute.setLongName(parser.getText());
+					}
+					else if(parser.getName().equalsIgnoreCase("description"))
+					{
+						parser.next();
+						tempRoute.setDescription(parser.getText());
+					}
+				}
 				
 				if(parser.getEventType()==XmlPullParser.END_TAG)
+				{
+					tagName = parser.getName();
+					
+					if(tagName.equalsIgnoreCase("route"))
+					{
+						stop.addRoute(tempRoute);
+					}
+				}
+			}
+			
+			/*
+			
+			Log.i("stopArraylistTest","in routes ");
+			Log.i("stopArraylistTest",parser.getPositionDescription());
+			parser.next();
+			Log.i("stopArraylistTest",parser.getPositionDescription());
+			skipToNextStartTag(parser);
+			Log.i("stopArraylistTest",parser.getPositionDescription());
+			while(!parser.getName().equals("routes"))
+			{
+				skipToNextStartTag(parser);
+				Log.i("stopArraylistTest","did not find start of routes: " + parser.getName());
+			}
+			
+			Log.i("stopArraylistTest",parser.getPositionDescription());
+			
+			/*
+			 * 
+			 * if(parser.getEventType()==XmlPullParser.END_TAG||parser.getEventType()==XmlPullParser.TEXT)
 				{
 					tag = parser.getText();
 					parser.next();
@@ -144,11 +220,13 @@ public interface StopsRequest {
 						parser.next();
 					}
 				}
-			}
-		}
-		
-		
-
-	}
-	
+				else
+				{
+					parser.next();
+				}
+			 * 
+			 * 
+			 * */
+		}		
+	}	
 }

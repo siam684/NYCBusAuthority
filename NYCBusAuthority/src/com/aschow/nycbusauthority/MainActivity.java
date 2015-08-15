@@ -100,6 +100,19 @@ public class MainActivity extends ActionBarActivity implements InternetTaskFragm
 			Log.i("stopArraylistTest","longitude: " + stop.getLongi());
 			Log.i("stopArraylistTest","direction: " + stop.getDirection());
 			Log.i("stopArraylistTest","name: " + stop.getName());
+			if(stop.getRoutes()!=null)
+			{
+				Log.i("stopArraylistTest","routes in stop: " + stop.getRoutes().size());
+				Iterator<Route> routeIt = stop.getRoutes().iterator();
+				while(routeIt.hasNext())
+				{
+					Route temp = routeIt.next();
+					Log.i("stopArraylistTest","routes id: " + temp.getId());
+					Log.i("stopArraylistTest","routes id: " + temp.getShortName());
+					Log.i("stopArraylistTest","routes id: " + temp.getLongName());
+					
+				}
+			}
 			pos++;
 		}
 	}
