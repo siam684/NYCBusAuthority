@@ -25,15 +25,15 @@ public interface StopsRequest {
 	        
 	        //ArrayList<Stop> stops = new ArrayList<Stop>();
 			
-	        String baseAdress = "http://bustime.mta.info/api/where/";
+/*	        String baseAdress = "http://bustime.mta.info/api/where/";
 	        String functionRequest = "stops-for-location.xml?";
 	        String key = "key=f3c06459-2018-43b6-b9ab-6e4356b4f1ad";
-	        String parameters = "&lat=40.732917&lon=-73.868229&radius=400";
+	        String parameters = "&lat=40.732917&lon=-73.868229&radius=600";
 	        		
 	        
-	        String url1 = baseAdress + functionRequest + key + parameters;
+	        String url1 = baseAdress + functionRequest + key + parameters;*/
 			
-	        URL input = new URL(url1);
+	        URL input = new URL(url);
 	        InputStream stream = input.openStream();
 	        parser.setInput(stream, null);
 	        int count = 1;
@@ -91,7 +91,6 @@ public interface StopsRequest {
 		        				tempStop.setName(parser.getText());
 		        			}
 		        			
-		        			//TODO add routes to stop object
 		        			processRoutes(parser,tempStop,count);
 		        			
 		        			stops.add(tempStop);
@@ -184,49 +183,6 @@ public interface StopsRequest {
 					}
 				}
 			}
-			
-			/*
-			
-			Log.i("stopArraylistTest","in routes ");
-			Log.i("stopArraylistTest",parser.getPositionDescription());
-			parser.next();
-			Log.i("stopArraylistTest",parser.getPositionDescription());
-			skipToNextStartTag(parser);
-			Log.i("stopArraylistTest",parser.getPositionDescription());
-			while(!parser.getName().equals("routes"))
-			{
-				skipToNextStartTag(parser);
-				Log.i("stopArraylistTest","did not find start of routes: " + parser.getName());
-			}
-			
-			Log.i("stopArraylistTest",parser.getPositionDescription());
-			
-			/*
-			 * 
-			 * if(parser.getEventType()==XmlPullParser.END_TAG||parser.getEventType()==XmlPullParser.TEXT)
-				{
-					tag = parser.getText();
-					parser.next();
-				}
-				else if(parser.getEventType()==XmlPullParser.START_TAG)
-				{
-					if(parser.getText().equals("route"))
-					{
-						Log.i("stopArraylistTest","route #" + routeCount++ + " found for stop #" + stopCount);
-						parser.next();
-					}
-					else
-					{
-						parser.next();
-					}
-				}
-				else
-				{
-					parser.next();
-				}
-			 * 
-			 * 
-			 * */
 		}		
 	}	
 }

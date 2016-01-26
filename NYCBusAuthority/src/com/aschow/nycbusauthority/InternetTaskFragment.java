@@ -19,7 +19,7 @@ public class InternetTaskFragment extends Fragment
 
 	interface TaskCallbacks 
 	{
-		void onPreExecute();
+		String onPreExecute();
 		void onProgressUpdate(int percent);
 		void onCancelled();
 		void onPostExecute(ArrayList<Stop> stopList);
@@ -33,7 +33,7 @@ public class InternetTaskFragment extends Fragment
 	 */
 
 	private TaskCallbacks mCallbacks;
-	private InternetAsyncTask mTask;
+	private StopsRequestAsyncTask mTask;
 
 	@Override
 	public void onAttach(Activity activity) 
@@ -56,7 +56,7 @@ public class InternetTaskFragment extends Fragment
 		setRetainInstance(true);
 
 		// Create and execute the background task.
-		mTask = new InternetAsyncTask();
+		mTask = new StopsRequestAsyncTask();
 		mTask.execute();
 	}
 
@@ -71,14 +71,20 @@ public class InternetTaskFragment extends Fragment
 		mCallbacks = null;
 	}
 
-	private class InternetAsyncTask extends AsyncTask<Void, Integer, Void>
+	private class StopsRequestAsyncTask extends AsyncTask<Void, Integer, Void>
 	{
 		ArrayList<Stop> stops;
+		private String stopRequestUrl;
+
 		
 		@Override
 		protected void onPreExecute() {
 			if (mCallbacks != null) {
-				mCallbacks.onPreExecute();
+				
+				
+				
+				
+				stopRequestUrl = mCallbacks.onPreExecute();
 			}
 		}
 
@@ -94,7 +100,7 @@ public class InternetTaskFragment extends Fragment
 			try {
 				Log.i("stopArraylistTest","in doInBackground");
 				stops = new ArrayList<Stop>();
-				stops = StopsRequestor.getStops("",stops);
+				stops = StopsRequestor.getStops(stopRequestUrl,stops);
 				Log.i("stopArraylistTest","size of stop array in fragment: "+ stops.size());
 			} catch (XmlPullParserException e) {
 				// TODO Auto-generated catch block
