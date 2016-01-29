@@ -49,6 +49,7 @@ public class MapActivity extends ActionBarActivity implements InternetTaskFragme
 	String LocationUrl;
 	private FragmentTransaction trans;
 	public Activity activity;
+	Bundle bundleToSend;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -58,8 +59,7 @@ public class MapActivity extends ActionBarActivity implements InternetTaskFragme
 		
 		getWindow().requestFeature(Window.FEATURE_ACTION_BAR);
 	    
-		ActionBar actionBar = getActionBar();
-		
+		ActionBar actionBar = getActionBar();		
 		if(actionBar!=null)
 			actionBar.hide();
 		
@@ -119,10 +119,15 @@ public class MapActivity extends ActionBarActivity implements InternetTaskFragme
 	}
 
 	@Override
-	public String onPreExecute() {
+	public Bundle onPreExecute() {
 		// TODO Auto-generated method stub
 		Log.i("requestUrl",LocationUrl);
-		return LocationUrl;
+		bundleToSend = new Bundle();
+		bundleToSend.putBoolean("stopRequested", true);
+		bundleToSend.putString("StopRequestUrl", LocationUrl);
+		bundleToSend.putBoolean("shapeRequested", true);
+		bundleToSend.putString("shapeRequestUrl", "http://bustime.mta.info/api/where/shape/MTA_Q020070.xml?key=f3c06459-2018-43b6-b9ab-6e4356b4f1ad");
+		return bundleToSend;
 	}
 
 	@Override
@@ -138,12 +143,15 @@ public class MapActivity extends ActionBarActivity implements InternetTaskFragme
 	}
 
 	@Override
-	public void onPostExecute(ArrayList<Stop> stopList) 
+	public void onPostExecute(Bundle recievedBundle) 
 	{
 		// TODO Auto-generated method stub
-		retreivedStopList = stopList;
+		Log.e("shapeRequestReturnValue", "from mapact onpost retrieved: " + recievedBundle.getString("encodedPolyline"));
 		
-		Log.i("stopArraylistTest","size of stop array in main: "+ stopList.size());
+		retreivedStopList = (ArrayList<Stop>)recievedBundle.getSerializable("stopsArrayList");
+		Log.e("shapeRequestReturnValue", "size of retreivedStopList: " + retreivedStopList.size());
+		
+		//Log.i("stopArraylistTest","size of stop array in main: "+  ((ArrayList<Stop>) recievedBundle.getSerializable("stopsArrayList")).size());
 		int pos = 0;
 		for(int i = 0;i<retreivedStopList.size();i++)
 		{
@@ -260,7 +268,7 @@ public class MapActivity extends ActionBarActivity implements InternetTaskFragme
 			//find stop object from retrieved list that matches the marker
 			Stop markerStop = retreivedStopList.get(Integer.valueOf(marker.getSnippet()));
 						
-			//programmatically add text views for the name of the stop, and 1 text view for each route under the stop
+			//programmaticaly add text views for the name of the stop, and 1 text view for each route under the stop
 			LinearLayout layoutView = (LinearLayout)view;
 			layoutView.setBackgroundColor(Color.WHITE);
 			Iterator<Route> routeIterator  = markerStop.getRoutes().iterator();
