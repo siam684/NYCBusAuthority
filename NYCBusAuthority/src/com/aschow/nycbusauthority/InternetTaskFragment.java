@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import org.xmlpull.v1.XmlPullParserException;
 
-import com.aschow.nycbusauthority.StopsRequest.StopsRequestor;
+import com.aschow.nycbusauthority.Request.Requestor;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -19,10 +19,10 @@ public class InternetTaskFragment extends Fragment
 
 	interface TaskCallbacks 
 	{
-		String onPreExecute();
+		Bundle onPreExecute();
 		void onProgressUpdate(int percent);
 		void onCancelled();
-		void onPostExecute(ArrayList<Stop> stopList);
+		void onPostExecute(Bundle bundleToSend);
 	}
 
 	/**
@@ -32,14 +32,15 @@ public class InternetTaskFragment extends Fragment
 	 * each configuration change.
 	 */
 
-	private TaskCallbacks mCallbacks;
-	private StopsRequestAsyncTask mTask;
+	private TaskCallbacks callIngActivity;
+	private MTARequestAsyncTask mTask;
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public void onAttach(Activity activity) 
 	{
 		super.onAttach(activity);
-		mCallbacks = (TaskCallbacks) activity;
+		callIngActivity = (TaskCallbacks) activity;
 	}
 
 
@@ -56,7 +57,7 @@ public class InternetTaskFragment extends Fragment
 		setRetainInstance(true);
 
 		// Create and execute the background task.
-		mTask = new StopsRequestAsyncTask();
+		mTask = new MTARequestAsyncTask();
 		mTask.execute();
 	}
 
@@ -68,23 +69,44 @@ public class InternetTaskFragment extends Fragment
 	public void onDetach() 
 	{
 		super.onDetach();
-		mCallbacks = null;
+		callIngActivity = null;
 	}
 
-	private class StopsRequestAsyncTask extends AsyncTask<Void, Integer, Void>
+	private class MTARequestAsyncTask extends AsyncTask<Void, Integer, Void>
 	{
+		Bundle retrievedBundle;
 		ArrayList<Stop> stops;
+		String encodedPolyline;		
 		private String stopRequestUrl;
+		private String shapeRequestUrl;
+		Boolean stopRequested;
+		Boolean shapeRequested;
 
 		
 		@Override
-		protected void onPreExecute() {
-			if (mCallbacks != null) {
+		protected void onPreExecute() 
+		{
+			Log.i("MethodCalls","STRAT onPreExecute");
+			
+			if (callIngActivity != null) 
+			{
+				//accept bundle from mCallbacks.onPreExecute() instead of string
+				retrievedBundle = callIngActivity.onPreExecute();
 				
+				stopRequested = retrievedBundle.getBoolean("stopRequested");
+				shapeRequested = retrievedBundle.getBoolean("shapeRequested");
 				
-				
-				
-				stopRequestUrl = mCallbacks.onPreExecute();
+				if(stopRequested)
+				{					
+					stopRequestUrl = retrievedBundle.getString("StopRequestUrl");					
+				}
+
+				if(shapeRequested)
+				{
+					Log.e("shapeRequestReturnValue", "shapeRequested: " +shapeRequested);
+					shapeRequestUrl = retrievedBundle.getString("shapeRequestUrl");
+					Log.e("shapeRequestReturnValue", "shapeRequestUrl: " + shapeRequestUrl);
+				}
 			}
 		}
 
@@ -97,10 +119,59 @@ public class InternetTaskFragment extends Fragment
 		@Override
 		protected Void doInBackground(Void... ignore) 
 		{
+			Log.i("MethodCalls","STRAT doInBackground");
+			try
+			{
+				checkForRequests();
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
+			}
+			
+			return null;
+		}
+		
+		@Override
+		protected void onPostExecute(Void ignore) {
+			Log.i("MethodCalls","STRAT onPostExecute");
+			Log.e("shapeRequestReturnValue", "ITF OnPost size of stops array: "+ stops.size());
+			if (callIngActivity != null) {
+				//Log.i("stopArraylistTest","size of stop array in fragment: "+ stops.size());
+				Bundle bundleToSend = new Bundle();
+				Log.e("shapeRequestReturnValue", "ITF OnPost size of stops array: "+ stops.size());
+				bundleToSend.putSerializable("stopsArrayList", stops);
+				bundleToSend.putString("encodedPolyline", encodedPolyline);
+				callIngActivity.onPostExecute(bundleToSend);
+			}
+		}
+
+		@Override
+		protected void onProgressUpdate(Integer... percent) {
+			Log.i("MethodCalls","STRAT onProgressUpdate");
+			if (callIngActivity != null) {
+				callIngActivity.onProgressUpdate(percent[0]);
+			}
+		}
+
+		@Override
+		protected void onCancelled() {
+			Log.i("MethodCalls","STRAT onCancelled");
+			if (callIngActivity != null) {
+				callIngActivity.onCancelled();
+				Log.e("shapeRequestReturnValue", "doinbackground canceled");
+			}
+		}
+		
+		
+		private void makeStopRequest()
+		{
+			Log.i("MethodCalls","STRAT makeStopRequest");
 			try {
-				Log.i("stopArraylistTest","in doInBackground");
+				Log.i("stopArraylistTest","in makeStopRequest");
 				stops = new ArrayList<Stop>();
-				stops = StopsRequestor.getStops(stopRequestUrl,stops);
+				stops = Requestor.getStops(stopRequestUrl,stops);
+				Log.e("shapeRequestReturnValue", "stops count" + stops.size());
 				Log.i("stopArraylistTest","size of stop array in fragment: "+ stops.size());
 			} catch (XmlPullParserException e) {
 				// TODO Auto-generated catch block
@@ -109,30 +180,42 @@ public class InternetTaskFragment extends Fragment
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			return null;
+			this.stopRequested = false;
+			checkForRequests();
+			return;
 		}
-
-		@Override
-		protected void onProgressUpdate(Integer... percent) {
-			if (mCallbacks != null) {
-				mCallbacks.onProgressUpdate(percent[0]);
+		
+		private void makeShapeRequest()
+		{
+			Log.i("MethodCalls","STRAT makeShapeRequest");
+			Log.i("shapeRequestReturnValue", "making shape request");
+			try {
+				Log.e("shapeRequestReturnValue", "shapeRequestUrl from makeshaperequest: " + shapeRequestUrl);
+				encodedPolyline = Requestor.getShape(shapeRequestUrl);
+			} catch (XmlPullParserException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
+			this.shapeRequested = false;
+			checkForRequests();
+			return;
 		}
-
-		@Override
-		protected void onCancelled() {
-			if (mCallbacks != null) {
-				mCallbacks.onCancelled();
+		
+		public void checkForRequests()
+		{
+			Log.i("MethodCalls","STRAT checkForRequests");
+			if(this.stopRequested)
+			{
+				makeStopRequest();
 			}
-		}
-		@Override
-		protected void onPostExecute(Void ignore) {
-			if (mCallbacks != null) {
-				Log.i("stopArraylistTest","size of stop array in fragment: "+ stops.size());
-				mCallbacks.onPostExecute(stops);
+			else if(this.shapeRequested)
+			{
+				makeShapeRequest();					
 			}
+			return;
 		}
-
 	}
-
 }

@@ -11,11 +11,12 @@ import org.xmlpull.v1.XmlPullParserFactory;
 
 import android.util.Log;
 
-public interface StopsRequest {
+public interface Request {
 	
 	public ArrayList<Stop> getStops();
+	public String getShape();
 	
-	public static class StopsRequestor {
+	public static class Requestor {
 		
 		public static ArrayList<Stop> getStops(String url, ArrayList<Stop> stops) throws XmlPullParserException, IOException
 		{
@@ -104,9 +105,47 @@ public interface StopsRequest {
 		        		}
 		        	}
 	        	}
-	        stream.close();
+	        //stream.close();
     		return stops;
     		
+		}
+		
+		public static String getShape(String url) throws XmlPullParserException, IOException
+		{
+			String encodedPolyline = null;
+			Log.e("shapeRequestReturnValue", "in get shape");
+			
+			XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+	        factory.setNamespaceAware(false);
+	        XmlPullParser parser = factory.newPullParser();
+	        
+
+			URL input = new URL(url);
+	        InputStream stream = input.openStream();
+	        parser.setInput(stream, null);
+			
+	        
+	        while(parser.getEventType()!=XmlPullParser.END_DOCUMENT)
+	        {
+	        	if(parser.getEventType() != XmlPullParser.START_TAG)
+	        	{
+	        		parser.nextTag();
+	        	}
+	        	else
+	        	{
+	        		skipToNextDefinedStartTag(parser,"points");
+	    	        Log.e("shapeRequestReturnValue", "tag title: " + parser.getName());
+	    	        if(parser.getName().equals("points"))
+	    	        {
+	    	        	parser.next();
+	    	        	encodedPolyline = parser.getText();
+	    	        	Log.e("shapeRequestReturnValue", "encodedPolyline: " + parser.getText());
+	    	        }
+	        	}
+	        }
+	        
+	        //stream.close();
+			return encodedPolyline;
 		}
 		
 		private static void skipToNextStartTag(XmlPullParser parser) throws XmlPullParserException, IOException

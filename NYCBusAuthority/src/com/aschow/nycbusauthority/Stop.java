@@ -1,8 +1,9 @@
 package com.aschow.nycbusauthority;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class Stop 
+public class Stop implements Serializable
 {
     private String id;
     private double lat;
