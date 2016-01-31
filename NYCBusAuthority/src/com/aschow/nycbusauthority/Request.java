@@ -105,7 +105,7 @@ public interface Request {
 		        		}
 		        	}
 	        	}
-	        //stream.close();
+	        stream.close();
     		return stops;
     		
 		}
@@ -144,7 +144,7 @@ public interface Request {
 	        	}
 	        }
 	        
-	        //stream.close();
+	        stream.close();
 			return encodedPolyline;
 		}
 		

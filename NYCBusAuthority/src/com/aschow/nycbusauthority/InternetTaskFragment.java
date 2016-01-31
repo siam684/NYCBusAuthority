@@ -9,9 +9,10 @@ import com.aschow.nycbusauthority.Request.Requestor;
 import android.app.Activity;
 import android.app.Fragment;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-
+import android.annotation.TargetApi;
 import java.util.ArrayList;
 
 public class InternetTaskFragment extends Fragment
@@ -19,7 +20,7 @@ public class InternetTaskFragment extends Fragment
 
 	interface TaskCallbacks 
 	{
-		Bundle onPreExecute();
+		void onPreExecute();
 		void onProgressUpdate(int percent);
 		void onCancelled();
 		void onPostExecute(Bundle bundleToSend);
@@ -33,7 +34,10 @@ public class InternetTaskFragment extends Fragment
 	 */
 
 	private TaskCallbacks callIngActivity;
-	private MTARequestAsyncTask mTask;
+	private MTARequestAsyncTask stopRequestTask;
+	private MTARequestAsyncTask shapeRequestTask;
+	private boolean stopRequested;
+	private boolean shapeRequested;
 
 	@SuppressWarnings("deprecation")
 	@Override
@@ -52,14 +56,36 @@ public class InternetTaskFragment extends Fragment
 	public void onCreate(Bundle savedInstanceState) 
 	{
 		super.onCreate(savedInstanceState);
-
+		
 		// Retain this fragment across configuration changes.
 		setRetainInstance(true);
 
 		// Create and execute the background task.
-		mTask = new MTARequestAsyncTask();
-		mTask.execute();
-	}
+		Bundle retrievedBundle = this.getArguments();
+		
+		stopRequested = retrievedBundle.getBoolean("stopRequested");
+		shapeRequested = retrievedBundle.getBoolean("shapeRequested");
+		
+		if(stopRequested)
+		{
+			Bundle bundle = new Bundle();
+			bundle.putBoolean("stopRequested", true);
+			bundle.putString("StopRequestUrl",  retrievedBundle.getString("StopRequestUrl"));
+			stopRequestTask = new MTARequestAsyncTask(retrievedBundle);
+			this.StartAsyncTaskInParallel(stopRequestTask);
+			//stopRequestTask.execute();
+		}
+		
+		if(shapeRequested)
+		{
+			Bundle bundle = new Bundle();
+			bundle.putBoolean("shapeRequested", true);
+			bundle.putString("shapeRequestUrl",  retrievedBundle.getString("shapeRequestUrl"));
+			shapeRequestTask = new MTARequestAsyncTask(retrievedBundle);
+			this.StartAsyncTaskInParallel(shapeRequestTask);
+			//shapeRequestTask.execute();
+		}
+	} 
 
 	/**
 	 * Set the callback to null so we don't accidentally leak the 
@@ -70,6 +96,19 @@ public class InternetTaskFragment extends Fragment
 	{
 		super.onDetach();
 		callIngActivity = null;
+	}
+	
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+	private void StartAsyncTaskInParallel(MTARequestAsyncTask task) 
+	{
+	     if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB)
+	     {
+	    	 task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+	     }
+	     else
+	     {
+	    	 task.execute();
+	     }
 	}
 
 	private class MTARequestAsyncTask extends AsyncTask<Void, Integer, Void>
@@ -83,6 +122,11 @@ public class InternetTaskFragment extends Fragment
 		Boolean shapeRequested;
 
 		
+		public MTARequestAsyncTask(Bundle bundle)
+		{
+			retrievedBundle = bundle;
+		}
+		
 		@Override
 		protected void onPreExecute() 
 		{
@@ -90,9 +134,6 @@ public class InternetTaskFragment extends Fragment
 			
 			if (callIngActivity != null) 
 			{
-				//accept bundle from mCallbacks.onPreExecute() instead of string
-				retrievedBundle = callIngActivity.onPreExecute();
-				
 				stopRequested = retrievedBundle.getBoolean("stopRequested");
 				shapeRequested = retrievedBundle.getBoolean("shapeRequested");
 				
@@ -120,16 +161,17 @@ public class InternetTaskFragment extends Fragment
 		protected Void doInBackground(Void... ignore) 
 		{
 			Log.i("MethodCalls","STRAT doInBackground");
-			try
+			if(this.stopRequested)
 			{
-				checkForRequests();
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
+				this.makeStopRequest();
 			}
 			
-			return null;
+			if(this.shapeRequested)
+			{
+				this.makeShapeRequest();
+			}
+			Log.i("MethodCalls",this.getStatus().name());
+			return null;		
 		}
 		
 		@Override
@@ -140,8 +182,19 @@ public class InternetTaskFragment extends Fragment
 				//Log.i("stopArraylistTest","size of stop array in fragment: "+ stops.size());
 				Bundle bundleToSend = new Bundle();
 				Log.e("shapeRequestReturnValue", "ITF OnPost size of stops array: "+ stops.size());
-				bundleToSend.putSerializable("stopsArrayList", stops);
-				bundleToSend.putString("encodedPolyline", encodedPolyline);
+				
+				if(this.stopRequested)
+				{
+					bundleToSend.putSerializable("stopsArrayList", stops);
+					bundleToSend.putBoolean("stopRequested", true);
+				}
+				
+				if(this.shapeRequested)
+				{
+					bundleToSend.putString("encodedPolyline", encodedPolyline);
+					bundleToSend.putBoolean("shapeRequested", true);
+				}
+				
 				callIngActivity.onPostExecute(bundleToSend);
 			}
 		}
@@ -180,9 +233,6 @@ public class InternetTaskFragment extends Fragment
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			this.stopRequested = false;
-			checkForRequests();
-			return;
 		}
 		
 		private void makeShapeRequest()
@@ -199,23 +249,6 @@ public class InternetTaskFragment extends Fragment
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			this.shapeRequested = false;
-			checkForRequests();
-			return;
-		}
-		
-		public void checkForRequests()
-		{
-			Log.i("MethodCalls","STRAT checkForRequests");
-			if(this.stopRequested)
-			{
-				makeStopRequest();
-			}
-			else if(this.shapeRequested)
-			{
-				makeShapeRequest();					
-			}
-			return;
-		}
+		}		
 	}
 }

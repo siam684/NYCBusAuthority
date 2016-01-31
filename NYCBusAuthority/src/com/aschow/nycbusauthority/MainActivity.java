@@ -66,8 +66,7 @@ public class MainActivity extends ActionBarActivity implements InternetTaskFragm
     }
 
 	@Override
-	public Bundle onPreExecute() {
-		return null;
+	public void onPreExecute() {
 		// TODO Auto-generated method stub
 		
 	}

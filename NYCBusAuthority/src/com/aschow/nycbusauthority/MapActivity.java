@@ -119,15 +119,9 @@ public class MapActivity extends ActionBarActivity implements InternetTaskFragme
 	}
 
 	@Override
-	public Bundle onPreExecute() {
+	public void onPreExecute() {
 		// TODO Auto-generated method stub
 		Log.i("requestUrl",LocationUrl);
-		bundleToSend = new Bundle();
-		bundleToSend.putBoolean("stopRequested", true);
-		bundleToSend.putString("StopRequestUrl", LocationUrl);
-		bundleToSend.putBoolean("shapeRequested", true);
-		bundleToSend.putString("shapeRequestUrl", "http://bustime.mta.info/api/where/shape/MTA_Q020070.xml?key=f3c06459-2018-43b6-b9ab-6e4356b4f1ad");
-		return bundleToSend;
 	}
 
 	@Override
@@ -146,42 +140,48 @@ public class MapActivity extends ActionBarActivity implements InternetTaskFragme
 	public void onPostExecute(Bundle recievedBundle) 
 	{
 		// TODO Auto-generated method stub
-		Log.e("shapeRequestReturnValue", "from mapact onpost retrieved: " + recievedBundle.getString("encodedPolyline"));
-		
-		retreivedStopList = (ArrayList<Stop>)recievedBundle.getSerializable("stopsArrayList");
-		Log.e("shapeRequestReturnValue", "size of retreivedStopList: " + retreivedStopList.size());
-		
-		//Log.i("stopArraylistTest","size of stop array in main: "+  ((ArrayList<Stop>) recievedBundle.getSerializable("stopsArrayList")).size());
-		int pos = 0;
-		for(int i = 0;i<retreivedStopList.size();i++)
+		if(recievedBundle.getBoolean("shapeRequested")==true)
 		{
-			
-			Log.i("stopArraylistTest","stop #"+ pos);
-			Log.i("stopArraylistTest","id: " + retreivedStopList.get(i).getId());
-			Log.i("stopArraylistTest","latitude: " + retreivedStopList.get(i).getLat());
-			Log.i("stopArraylistTest","longitude: " + retreivedStopList.get(i).getLongi());
-			Log.i("stopArraylistTest","direction: " + retreivedStopList.get(i).getDirection());
-			Log.i("stopArraylistTest","name: " + retreivedStopList.get(i).getName());
-			map.addMarker(new MarkerOptions()
-            .position(new LatLng(retreivedStopList.get(i).getLat(), retreivedStopList.get(i).getLongi()))
-            .title(retreivedStopList.get(i).getName())
-            .snippet(String.valueOf(i)));
-			if(retreivedStopList.get(i).getRoutes()!=null)
-			{
-				Log.i("stopArraylistTest","routes in stop: " + retreivedStopList.get(i).getRoutes().size());
-				Iterator<Route> routeIt = retreivedStopList.get(i).getRoutes().iterator();
-				while(routeIt.hasNext())
-				{
-					Route temp = routeIt.next();
-					Log.i("stopArraylistTest","routes id: " + temp.getId());
-					Log.i("stopArraylistTest","routes id: " + temp.getShortName());
-					Log.i("stopArraylistTest","routes id: " + temp.getLongName());
-					
-				}
-			}
-			pos++;
+			Log.e("shapeRequestReturnValue", "from mapact onpost retrieved: " + recievedBundle.getString("encodedPolyline"));
+			Log.e("shapeRequestReturnValue", "size of retreivedStopList: " + retreivedStopList.size());
 		}
-		 trans.remove(mTaskFragment).commit();
+
+
+		if(recievedBundle.getBoolean("stopRequested")==true)
+		{
+			retreivedStopList = (ArrayList<Stop>)recievedBundle.getSerializable("stopsArrayList");
+			//Log.i("stopArraylistTest","size of stop array in main: "+  ((ArrayList<Stop>) recievedBundle.getSerializable("stopsArrayList")).size());
+			int pos = 0;
+			for(int i = 0;i<retreivedStopList.size();i++)
+			{
+				
+				Log.i("stopArraylistTest","stop #"+ pos);
+				Log.i("stopArraylistTest","id: " + retreivedStopList.get(i).getId());
+				Log.i("stopArraylistTest","latitude: " + retreivedStopList.get(i).getLat());
+				Log.i("stopArraylistTest","longitude: " + retreivedStopList.get(i).getLongi());
+				Log.i("stopArraylistTest","direction: " + retreivedStopList.get(i).getDirection());
+				Log.i("stopArraylistTest","name: " + retreivedStopList.get(i).getName());
+				map.addMarker(new MarkerOptions()
+	            .position(new LatLng(retreivedStopList.get(i).getLat(), retreivedStopList.get(i).getLongi()))
+	            .title(retreivedStopList.get(i).getName())
+	            .snippet(String.valueOf(i)));
+				if(retreivedStopList.get(i).getRoutes()!=null)
+				{
+					Log.i("stopArraylistTest","routes in stop: " + retreivedStopList.get(i).getRoutes().size());
+					Iterator<Route> routeIt = retreivedStopList.get(i).getRoutes().iterator();
+					while(routeIt.hasNext())
+					{
+						Route temp = routeIt.next();
+						Log.i("stopArraylistTest","routes id: " + temp.getId());
+						Log.i("stopArraylistTest","routes id: " + temp.getShortName());
+						Log.i("stopArraylistTest","routes id: " + temp.getLongName());
+						
+					}
+				}
+				pos++;
+			}
+		}
+		return;
 	}
 
 	@Override
@@ -221,6 +221,13 @@ public class MapActivity extends ActionBarActivity implements InternetTaskFragme
         {
         	
           mTaskFragment = new InternetTaskFragment();
+          bundleToSend = new Bundle();
+  		  bundleToSend.putBoolean("stopRequested", true);
+  		  bundleToSend.putString("StopRequestUrl", LocationUrl);
+  		  bundleToSend.putBoolean("shapeRequested", true);
+  		  bundleToSend.putString("shapeRequestUrl", "http://bustime.mta.info/api/where/shape/MTA_Q020070.xml?key=f3c06459-2018-43b6-b9ab-6e4356b4f1ad");
+  		  mTaskFragment.setArguments(bundleToSend);
+  		  
           fm.beginTransaction().add(mTaskFragment, TAG_TASK_FRAGMENT).commit();
           
           trans  = fm.beginTransaction();
@@ -234,9 +241,6 @@ public class MapActivity extends ActionBarActivity implements InternetTaskFragme
         {
         	Log.i("FragmentMessage","mTaskFragment not null");
         }
-		
-		
-		
 	}
 
 	@Override
