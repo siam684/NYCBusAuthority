@@ -66,7 +66,7 @@ public class MainActivity extends ActionBarActivity implements InternetTaskFragm
     }
 
 	@Override
-	public Bundle onPreExecute() {
+	public String onPreExecute() {
 		return null;
 		// TODO Auto-generated method stub
 		
@@ -85,12 +85,12 @@ public class MainActivity extends ActionBarActivity implements InternetTaskFragm
 	}
 
 	@Override
-	public void onPostExecute(Bundle recievedBundle) {
+	public void onPostExecute(ArrayList<Stop> stopList) {
 		// TODO Auto-generated method stub
 		
-		Iterator<Stop> it = ((ArrayList<Stop>) recievedBundle.getSerializable("stopsArrayList")).iterator();
+		Iterator<Stop> it = stopList.iterator();
 		
-		Log.i("stopArraylistTest","size of stop array in main: "+ ((ArrayList<Stop>) recievedBundle.getSerializable("stopsArrayList")).size());
+		Log.i("stopArraylistTest","size of stop array in main: "+ stopList.size());
 		int pos = 0;
 		while(it.hasNext())
 		{
